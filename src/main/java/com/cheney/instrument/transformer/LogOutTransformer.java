@@ -1,9 +1,9 @@
 package com.cheney.instrument.transformer;
 
+import javassist.ClassClassPath;
 import javassist.ClassPool;
 import javassist.CtBehavior;
 import javassist.CtClass;
-import javassist.CtMethod;
 
 import java.io.ByteArrayInputStream;
 import java.lang.instrument.ClassFileTransformer;
@@ -25,13 +25,14 @@ public class LogOutTransformer implements ClassFileTransformer {
             System.out.println("find target class:" + className);
             try {
                 ClassPool pool = ClassPool.getDefault();
+                ClassClassPath classPath = new ClassClassPath(this.getClass());
+                pool.insertClassPath(classPath);
                 CtClass cc = pool.makeClass(new ByteArrayInputStream(classfileBuffer));
                 ClassLoader classLoader = pool.getClassLoader();
                 CtBehavior[] declaredMethods = cc.getDeclaredBehaviors();
-                pool.importPackage("java.lang.System");
-                pool.importPackage("java.math.BigDecimal");
-                System.out.println("frozen:"+cc.isFrozen());
-                System.out.println("ClassLoader:" + classLoader);
+                System.out.println("frozen:" + cc.isFrozen());
+                System.out.println("ClassLoader:" + loader);
+                System.out.println("pool classLoader:" + classLoader);
                 /*Class<?> targetClass = cc.toClass();
                 ProxyFactory proxyFactory = new ProxyFactory();
                 proxyFactory.setSuperclass(targetClass);
@@ -49,11 +50,9 @@ public class LogOutTransformer implements ClassFileTransformer {
                     if ("test".equals(behavior.getName())) {
                         behavior.insertBefore("{" +
                                 "java.math.BigDecimal a = new java.math.BigDecimal(1);" +
-                                "$0.test2();"+
-                                "System.out.println(a);"+
+                                "$0.test2();" +
+                                "System.out.println(a);" +
                                 "}");
-//                        behavior.insertAfter("");
-//                        behavior.insertAfter("System.currentTimeMillis();");
                     }
                 }
                 return cc.toBytecode();

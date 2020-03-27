@@ -12,19 +12,20 @@ import java.lang.instrument.Instrumentation;
 public class LogAgent {
 
     public static void premain(String agentArgs, Instrumentation inst) throws Exception {
-        commonMain(agentArgs, inst);
+        inst.addTransformer(new LogOutTransformer(), true);
+        System.out.println("log agent start success~");
     }
 
     public static void agentmain(String agentArgs, Instrumentation inst) throws Exception {
-        commonMain(agentArgs, inst);
-        System.out.println("retransform support:" + inst.isRetransformClassesSupported());
-        inst.retransformClasses(PageCommonController.class);
-        System.out.println("retransform class");
-    }
-
-    private static void commonMain(String agentArgs, Instrumentation inst) throws Exception {
-        inst.addTransformer(new LogOutTransformer(), true);
+        LogOutTransformer transformer = new LogOutTransformer();
+        inst.addTransformer(transformer, true);
         System.out.println("log agent start success~");
+        boolean retransformClassesSupported = inst.isRetransformClassesSupported();
+        System.out.println("retransform support:" + retransformClassesSupported);
+        if (retransformClassesSupported) {
+            inst.retransformClasses(PageCommonController.class);
+        }
+        inst.removeTransformer(transformer);
     }
 
 }
